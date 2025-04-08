@@ -1,12 +1,17 @@
-from djitellopy import Tello
+from djitellopy import tello
+from time import sleep
 
-tello = Tello()
+pilot = tello.Tello()
 
-tello.connect()
-tello.takeoff()
+pilot.connect()
+pilot.takeoff()
 
-tello.move_left(100)
-tello.rotate_clockwise(90)
-tello.move_forward(100)
+sleep(1)
+pilot.move_left(100)
+sleep(1)
+pilot.rotate_clockwise(90)
+sleep(1)
+pilot.move_forward(100)
+sleep(1)
 
-tello.land()
+pilot.land()
