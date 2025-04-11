@@ -16,22 +16,19 @@ def camera_on():
     
 # some random commands for the drone to follow
 def random_moves():
-    sleep(3)
-    pilot.move_up(150)
-    sleep(3)
-    pilot.move_down(100)
-    sleep(3)
-    pilot.rotate_clockwise()
-    sleep(3)
+    sleep(10)
+    pilot.move_up(50)
+    sleep(10)
+    pilot.move_forward(50)
+    sleep(10)
     pilot.land()
     
 # completing the tasks together
 def main():
-    
     pilot.connect()
-    sleep(1)
+    sleep(10)
     pilot.takeoff()
-    sleep(3)
+    sleep(10)
     pilot.streamon()
     
     task1 = threading.Thread(target=camera_on, args=())
@@ -47,5 +44,5 @@ def main():
     pilot.end()
     
     # makes sure this program is only performed
-    if __name__ == "__main__": 
-        main()
+if __name__ == "__main__": 
+    main()
