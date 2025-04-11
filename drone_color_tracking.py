@@ -3,60 +3,76 @@ import numpy as np
 from djitellopy import tello
 
 # Connect to Tello
-drone = tello.Tello()
-drone.connect()
-drone.streamon()
+pilot = tello.Tello()
+pilot.connect()
 
-# Takeoff
-drone.takeoff()
+# Start video stream
+pilot.streamon()
+frame_read = pilot.get_frame_read()
 
-try:
-    while True:
-        # Get the current frame from Tello
-        frame = drone.get_frame_read().frame
-        frame = cv2.resize(frame, (640, 480))
+# Define HSV ranges for multiple colors
+color_ranges = {
+    'red1': ((0, 120, 70), (10, 255, 255)),
+    'red2': ((170, 120, 70), (180, 255, 255)),
+    'green': ((36, 50, 70), (89, 255, 255)),
+    'blue': ((90, 60, 70), (128, 255, 255)),
+    'yellow': ((20, 100, 100), (30, 255, 255)),
+}
 
-        # Convert to HSV for color detection
-        hsv = cv2.cvtColor(frame, cv2.COLOR_BGR2HSV)
+# Corresponding display colors (BGR)
+display_colors = {
+    'red1': (0, 0, 255),
+    'red2': (0, 0, 255),
+    'green': (0, 255, 0),
+    'blue': (255, 0, 0),
+    'yellow': (0, 255, 255),
+}
 
-        # Define the color range for tracking (e.g., red)
-        lower_red = np.array([0, 120, 70])
-        upper_red = np.array([10, 255, 255])
-        mask1 = cv2.inRange(hsv, lower_red, upper_red)
+while True:
+    frame = frame_read.frame
+    hsv = cv2.cvtColor(frame, cv2.COLOR_BGR2HSV)
 
-        lower_red2 = np.array([170, 120, 70])
-        upper_red2 = np.array([180, 255, 255])
-        mask2 = cv2.inRange(hsv, lower_red2, upper_red2)
-
-        mask = mask1 + mask2
-
-        # Find contours (i.e., detected blobs of color)
+    for color_name, (lower, upper) in color_ranges.items():
+        mask = cv2.inRange(hsv, lower, upper)
         contours, _ = cv2.findContours(mask, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
 
-        if contours:
-            largest = max(contours, key=cv2.contourArea)
-            x, y, w, h = cv2.boundingRect(largest)
-            cx = x + w // 2
-            cy = y + h // 2
+        for cnt in contours:
+            area = cv2.contourArea(cnt)
+            if area > 500:
+                x, y, w, h = cv2.boundingRect(cnt)
+                cv2.rectangle(frame, (x, y), (x + w, y + h), display_colors[color_name], 2)
+                cv2.putText(frame, color_name, (x, y - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.6, display_colors[color_name], 2)
 
-            # Draw rectangle and center dot
-            cv2.rectangle(frame, (x, y), (x + w, y + h), (0, 255, 0), 2)
-            cv2.circle(frame, (cx, cy), 5, (255, 0, 0), -1)
+    cv2.imshow("Color Tracking", frame)
 
-            # Movement logic (basic)
-            if cx < 270:
-                drone.rotate_counter_clockwise(10)
-            elif cx > 370:
-                drone.rotate_clockwise(10)
+    if cv2.waitKey(1) & 0xFF == ord('q'):
+        break
 
-        # Display result
-        cv2.imshow("Tello Camera", frame)
+pilot.streamoff()
+cv2.destroyAllWindows()
 
-        # Exit on 'q' key
-        if cv2.waitKey(1) & 0xFF == ord('q'):
-            break
+# Some code to recognize circles for capturing focus on the hoops
 
-finally:
-    drone.land()
-    drone.streamoff()
-    cv2.destroyAllWindows()
+while True:
+    frame = pilot.get_frame_read().frame
+    gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+    blurred = cv2.medianBlur(gray, 5)
+
+    circles = cv2.HoughCircles(
+        blurred, cv2.HOUGH_GRADIENT, dp=1.2, minDist=50,
+        param1=50, param2=30, minRadius=10, maxRadius=200
+    )
+
+    if circles is not None:
+        circles = np.round(circles[0, :]).astype("int")
+        for (x, y, r) in circles:
+            cv2.circle(frame, (x, y), r, (0, 255, 0), 4)
+            cv2.rectangle(frame, (x - 5, y - 5), (x + 5, y + 5), (0, 128, 255), -1)
+
+    cv2.imshow("Tello Circle Detection", frame)
+
+    if cv2.waitKey(1) & 0xFF == ord('q'):
+        break
+
+cv2.destroyAllWindows()
+pilot.streamoff()
