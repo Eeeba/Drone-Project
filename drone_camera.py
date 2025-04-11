@@ -1,6 +1,6 @@
+import cv2
 from djitellopy import tello
 from time import sleep
-import cv2
 import threading
 
 pilot = tello.Tello()
@@ -19,9 +19,6 @@ def random_moves():
     sleep(3)
     pilot.move_up(150)
     sleep(3)
-    pilot.flip("b")
-    sleep(2)
-    pilot.flip("f")
     pilot.move_down(100)
     sleep(3)
     pilot.rotate_clockwise()
@@ -29,15 +26,16 @@ def random_moves():
     pilot.land()
     
 # completing the tasks together
-def joined_tasks():
+def main():
+    
     pilot.connect()
-    sleep(3)
+    sleep(1)
     pilot.takeoff()
     sleep(3)
     pilot.streamon()
     
-    task1 = threading.Thread(target = camera_on, args=())
-    task2 = threading.Thread(target = random_moves, args=())
+    task1 = threading.Thread(target=camera_on, args=())
+    task2 = threading.Thread(target=random_moves, args=())
     
     task1.start()
     task2.start()
@@ -48,5 +46,6 @@ def joined_tasks():
     pilot.streamoff()
     pilot.end()
     
-# makes sure this program is only performed
-    if __name__ == "__main__": joined_tasks()
+    # makes sure this program is only performed
+    if __name__ == "__main__": 
+        main()

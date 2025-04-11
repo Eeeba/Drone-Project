@@ -1,7 +1,7 @@
-from djitellopy import tello
+from djitellopy import Tello
 from time import sleep
 
-pilot = tello.Tello()
+pilot = Tello()
 
 pilot.connect()
 pilot.takeoff()
