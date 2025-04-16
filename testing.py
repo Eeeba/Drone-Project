@@ -17,26 +17,14 @@ frame_reader = pilot.get_frame_read()
 kernel = np.ones((5, 5), "uint8")
 last_log_time = time.time()
 
-HISTORY = 1000
-VAR_THRESHOLD = 100
-DETECT_SHADOWS = False
+# Initialize background subtractor
+bg_subtractor = cv2.createBackgroundSubtractorMOG2(history=500, varThreshold=50, detectShadows=False)
 
-def create_bg_subtractor():
-
-    bg_subtractor = cv2.createBackgroundSubtractorMOG2(
-        history = HISTORY, 
-        varThreshold = VAR_THRESHOLD, 
-        detectShadows = DETECT_SHADOWS
-    )
-    
-    return bg_subtractor
-
-bg_subtractor = create_bg_subtractor()
-
+# Define colors and ranges
 colors = [
     {
         "name": "Red",
-        "bgr": (60, 30, 235),
+        "bgr": (0, 0, 150),
         "ranges": [
             (np.array([0, 120, 70]), np.array([10, 255, 255])),
             (np.array([170, 120, 70]), np.array([180, 255, 255]))
@@ -60,7 +48,7 @@ colors = [
     {
         "name": "Orange",
         "bgr": (10, 90, 190),
-        "ranges": [(np.array([10, 150, 150]), np.array([30, 255, 255]))]
+        "ranges": [(np.array([5, 150, 150]), np.array([15, 255, 255]))]
     },
     {
         "name": "Purple",
@@ -73,22 +61,27 @@ while True:
     frame = frame_reader.frame
     hsvFrame = cv2.cvtColor(frame, cv2.COLOR_BGR2HSV)
 
+    # Apply background subtraction to create the foreground mask
     fg_mask = bg_subtractor.apply(frame)
 
+    # Optional: clean up foreground mask (removes small noise or shadow)
     fg_mask = cv2.morphologyEx(fg_mask, cv2.MORPH_OPEN, kernel)
     fg_mask = cv2.dilate(fg_mask, kernel)
 
+    # Create a black background for the output
     black_background = np.zeros_like(frame)
 
     for color in colors:
-        
+        # Combine color masks
         full_mask = None
         for lower, upper in color["ranges"]:
             mask = cv2.inRange(hsvFrame, lower, upper)
             full_mask = mask if full_mask is None else full_mask | mask
 
+        # Dilate the mask to reduce noise
         full_mask = cv2.dilate(full_mask, kernel)
 
+        # Apply the foreground mask to the color mask (keep only foreground objects)
         foreground_color_mask = cv2.bitwise_and(full_mask, fg_mask)
 
         contours, _ = cv2.findContours(foreground_color_mask, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
@@ -105,13 +98,17 @@ while True:
                         color_log.write(color["name"] + "\n")
                     last_log_time = time.time()
 
+        # Add detected colored regions to the black background
         color_region = cv2.bitwise_and(frame, frame, mask=foreground_color_mask)
         black_background = cv2.add(black_background, color_region)
 
+    # Show the output frame with black background
     cv2.imshow("Tello Color Detection with Blacked-Out Background", black_background)
 
+    # Optional: view the foreground mask for debugging
+    # cv2.imshow("Foreground Mask", fg_mask)
+
     if cv2.waitKey(1) & 0xFF == ord('b'):
-        
         pilot.streamoff()
         cv2.destroyAllWindows()
         break
