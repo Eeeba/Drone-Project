@@ -92,6 +92,9 @@ class FrontEnd(object):
             self.yaw_velocity = -S
         elif key == pygame.K_d:  
             self.yaw_velocity = S
+        elif key == pygame.K_f:
+            self.tello.flip('b')
+            time.sleep(2)
 
     def keyup(self, key):
 
