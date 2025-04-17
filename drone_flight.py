@@ -42,35 +42,38 @@ class TelloColorGUI:
             {"name": "Purple", "bgr": (64, 0, 64), "ranges": [(np.array([130, 50, 50]), np.array([160, 255, 255]))]}
         ]
 
+        self.selected_color_idx = 0  # Default to first color (Red)
+
     def process_color_detection(self, frame):
         hsv = cv2.cvtColor(frame, cv2.COLOR_BGR2HSV)
         black_background = np.zeros_like(frame)
 
-        for color in self.colors:
-            full_mask = None
-            for lower, upper in color["ranges"]:
-                mask = cv2.inRange(hsv, lower, upper)
-                full_mask = mask if full_mask is None else full_mask | mask
+        color = self.colors[self.selected_color_idx]  # Only process selected color
 
-            full_mask = cv2.dilate(full_mask, self.kernel)
-            contours, _ = cv2.findContours(full_mask, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
+        full_mask = None
+        for lower, upper in color["ranges"]:
+            mask = cv2.inRange(hsv, lower, upper)
+            full_mask = mask if full_mask is None else full_mask | mask
 
-            for contour in contours:
-                area = cv2.contourArea(contour)
-                if area > 1000:
-                    x, y, w, h = cv2.boundingRect(contour)
-                    cv2.rectangle(black_background, (x, y), (x + w, y + h), color["bgr"], 2)
-                    cv2.putText(black_background, f"{color['name']}", (x, y - 10),
-                                cv2.FONT_HERSHEY_SIMPLEX, 0.8, color["bgr"], 2)
-                    if time.time() - self.last_log_time > 20:
-                        with open("colors.txt", "a") as f:
-                            f.write(f"{color['name']}\n")
-                        self.last_log_time = time.time()
-            color_region = cv2.bitwise_and(frame, frame, mask=full_mask)
-            black_background = cv2.add(black_background, color_region)
+        full_mask = cv2.dilate(full_mask, self.kernel)
+        contours, _ = cv2.findContours(full_mask, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
+
+        for contour in contours:
+            area = cv2.contourArea(contour)
+            if area > 1000:
+                x, y, w, h = cv2.boundingRect(contour)
+                cv2.rectangle(black_background, (x, y), (x + w, y + h), color["bgr"], 2)
+                cv2.putText(black_background, f"{color['name']}", (x, y - 10),
+                            cv2.FONT_HERSHEY_SIMPLEX, 0.8, color["bgr"], 2)
+                if time.time() - self.last_log_time > 20:
+                    with open("colors.txt", "a") as f:
+                        f.write(f"{color['name']}\n")
+                    self.last_log_time = time.time()
+
+        color_region = cv2.bitwise_and(frame, frame, mask=full_mask)
+        black_background = cv2.add(black_background, color_region)
 
         return black_background
-
 
     def update(self):
         if self.send_rc_control:
@@ -95,6 +98,9 @@ class TelloColorGUI:
         elif key == pygame.K_f:
             self.tello.flip('b')
             time.sleep(2)
+        elif key in [pygame.K_1, pygame.K_2, pygame.K_3, pygame.K_4, pygame.K_5, pygame.K_6]:
+            self.selected_color_idx = key - pygame.K_1
+            print(f"[INFO] Switched to color: {self.colors[self.selected_color_idx]['name']}")
 
     def keyup(self, key):
         if key in [pygame.K_UP, pygame.K_DOWN]: self.for_back_velocity = 0
@@ -145,7 +151,6 @@ class TelloColorGUI:
 def main():
     gui = TelloColorGUI()
     gui.run()
-
 
 if __name__ == "__main__":
     main()
