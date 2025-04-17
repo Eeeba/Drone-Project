@@ -2,7 +2,6 @@ from djitellopy import Tello
 from time import sleep
 
 pilot = Tello()
-
 pilot.connect()
 pilot.takeoff()
 pilot.set_speed(30)
@@ -162,4 +161,5 @@ sleep(1)
 pilot.move_up(60)
 sleep(1)
 pilot.move_forward(290)
+sleep(1)
 pilot.land()
