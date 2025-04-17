@@ -5,9 +5,9 @@ import djitellopy as tello
 
 # Connect to Tello
 pilot = tello.Tello()
+
 try:
     pilot.connect()
-    print(f"Battery: {pilot.get_battery()}%")
     pilot.streamon()
 except Exception as e:
     print(f"Failed to connect to Tello: {e}")
@@ -108,7 +108,7 @@ while True:
         color_region = cv2.bitwise_and(frame, frame, mask=foreground_color_mask)
         black_background = cv2.add(black_background, color_region)
 
-    cv2.imshow("Tello Color Detection with Blacked-Out Background", black_background)
+    cv2.imshow("Color Detection", black_background)
 
     if cv2.waitKey(1) & 0xFF == ord('b'):
         
