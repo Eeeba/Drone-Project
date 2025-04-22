@@ -36,7 +36,7 @@ class TelloColorGUI:
             {"name": "Red", "bgr": (60, 30, 235), "ranges": [(np.array([0, 120, 70]), np.array([10, 255, 255])),
                                                              (np.array([170, 120, 70]), np.array([180, 255, 255]))]},
             {"name": "Green", "bgr": (0, 255, 0), "ranges": [(np.array([36, 100, 100]), np.array([86, 255, 255]))]},
-            {"name": "Blue", "bgr": (255, 0, 0), "ranges": [(np.array([94, 80, 2]), np.array([120, 255, 255]))]},
+            {"name": "Blue", "bgr": (255, 0, 0), "ranges": [(np.array([100, 150, 100]), np.array([130, 255, 255]))]},
             {"name": "Yellow", "bgr": (0, 255, 255), "ranges": [(np.array([25, 200, 200]), np.array([35, 255, 255]))]},
             {"name": "Orange", "bgr": (10, 90, 190), "ranges": [(np.array([10, 150, 150]), np.array([30, 255, 255]))]},
             {"name": "Purple", "bgr": (64, 0, 64), "ranges": [(np.array([130, 50, 50]), np.array([160, 255, 255]))]}
